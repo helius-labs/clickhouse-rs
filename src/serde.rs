@@ -106,6 +106,53 @@ pub mod uuid {
     }
 }
 
+/// Ser/de [`primitive_types::U256`] to/from `UInt256`.
+pub mod u256 {
+    use primitive_types::U256;
+    use serde::de::Error;
+
+    use super::*;
+
+    option!(U256, "Ser/de `Option<U256>` to/from `Nullable(UInt256)`.");
+
+    pub fn serialize<S>(value: &U256, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            value.to_string().serialize(serializer)
+        } else {
+            let mut bytes = [0u8; 32];
+            value.to_little_endian(&mut bytes);
+            let tuple = (
+                u64::from_le_bytes(bytes[0..8].try_into().unwrap()),
+                u64::from_le_bytes(bytes[8..16].try_into().unwrap()),
+                u64::from_le_bytes(bytes[16..24].try_into().unwrap()),
+                u64::from_le_bytes(bytes[24..32].try_into().unwrap()),
+            );
+            tuple.serialize(serializer)
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<U256, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            let s: &str = Deserialize::deserialize(deserializer)?;
+            U256::from_dec_str(s).map_err(D::Error::custom)
+        } else {
+            let tuple: (u64, u64, u64, u64) = Deserialize::deserialize(deserializer)?;
+            let mut bytes = [0u8; 32];
+            bytes[0..8].copy_from_slice(&tuple.0.to_le_bytes());
+            bytes[8..16].copy_from_slice(&tuple.1.to_le_bytes());
+            bytes[16..24].copy_from_slice(&tuple.2.to_le_bytes());
+            bytes[24..32].copy_from_slice(&tuple.3.to_le_bytes());
+            Ok(U256::from_little_endian(&bytes))
+        }
+    }
+}
+
 #[cfg(feature = "chrono")]
 pub mod chrono {
     use super::*;
