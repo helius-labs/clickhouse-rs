@@ -583,6 +583,10 @@ fn validate_impl<'de, 'cursor, R: Row>(
                 root,
                 kind: InnerDataTypeValidatorKind::Array(&DataTypeNode::UInt8),
             }),
+            DataTypeNode::UInt256 => Some(InnerDataTypeValidator {
+                root,
+                kind: InnerDataTypeValidatorKind::Tuple(U256_TUPLE_ELEMENTS),
+            }),
             DataTypeNode::UUID => Some(InnerDataTypeValidator {
                 root,
                 kind: InnerDataTypeValidatorKind::Tuple(UUID_TUPLE_ELEMENTS),
@@ -776,3 +780,9 @@ impl EnumOrVariantIdentifier for i16 {
 
 const UUID_TUPLE_ELEMENTS: &[DataTypeNode; 2] = &[DataTypeNode::UInt64, DataTypeNode::UInt64];
 const POINT_TUPLE_ELEMENTS: &[DataTypeNode; 2] = &[DataTypeNode::Float64, DataTypeNode::Float64];
+const U256_TUPLE_ELEMENTS: &[DataTypeNode; 4] = &[
+    DataTypeNode::UInt64,
+    DataTypeNode::UInt64,
+    DataTypeNode::UInt64,
+    DataTypeNode::UInt64,
+];
